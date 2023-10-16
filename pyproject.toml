@@ -1,0 +1,37 @@
+[project]
+name = "hangman"
+version = "0.1.0"
+description = "A CLI hangman game"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Unlicense" }
+authors = [
+	{ name = "InSyncWithFoo", email = "insyncwithfoo@gmail.com" }
+]
+classifiers = [
+	"License :: OSI Approved :: The Unlicense (Unlicense)",
+	"Topic :: Games/Entertainment"
+]
+
+[project.optional-dependencies]
+dev = [
+	"build~=1.0.3",
+	"mypy~=1.6.0",
+	"pytest~=7.4.2",
+	"pytest-cov~=4.1.0",
+	"setuptools~=68.2.2",
+	"tox~=4.11.3"
+]
+
+[project.urls]
+Homepage = "https://github.com/InSyncWithFoo/hangman"
+
+[project.scripts]
+hangman = "_hangman.runner:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-data = { "*" = ["*.txt"] }

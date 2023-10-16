@@ -1,0 +1,18 @@
+Welcome to Hangman!
+
+Hangman is a word guessing game where you will be hanged
+(and therefore lose) if you guess incorrectly more than
+6 times. There will be no characters other than ASCII
+letters, and inputs are case-insensitive.
+
+There are four levels:
+
+ - [E] Easy (22.5k words)      - [M] Medium (74.5k words)
+ - [H] Hard (168k words)       - [U] Unix (205k words)
+
+A correct guess merits you 2 point each letter, while an
+incorrect guess costs you 1 points, multiplied by the
+coefficient of the level: Easy 1, Medium 2, Hard 3, Unix 4.
+
+The game is round-based. You will be asked to continue after
+each round. To exit the game at any time, press Ctrl + C.

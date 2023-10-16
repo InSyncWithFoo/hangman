@@ -1,0 +1,9 @@
+[*]
+charset = utf-8
+end_of_line = lf
+
+[*.py]
+indent_style = tab
+
+[*.txt]
+max_line_length = 80
