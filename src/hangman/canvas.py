@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from abc import ABC
-from collections.abc import Collection, Container, Generator, Iterator, Sequence
+from collections.abc import Collection, Generator, Iterator, Sequence
 from dataclasses import dataclass
 from functools import partial
 from itertools import batched
@@ -14,6 +13,12 @@ from ._static_reader import get_asset
 
 @dataclass(frozen = True)
 class LayerCell:
+	'''
+	Represents a layer cell.
+	
+	``value`` must be a single character.
+	'''
+	
 	row: int
 	column: int
 	value: str
@@ -24,6 +29,10 @@ class LayerCell:
 	
 	@property
 	def is_transparent(self) -> bool:
+		'''
+		Whether the value contains only whitespaces.
+		'''
+		
 		return self.value.strip() == ''
 
 
@@ -32,6 +41,10 @@ _GridOfStrings = Sequence[Sequence[str]]
 
 class Layer:
 	
+	r'''
+	A rectangle grid of :class:`LayerCell`\ s.
+	'''
+	
 	__slots__ = ('_cells', '_height', '_width')
 	
 	_cells: list[LayerCell]
@@ -39,6 +52,12 @@ class Layer:
 	_width: int
 	
 	def __new__(cls, argument: _GridOfStrings) -> 'Self':  # PY-62301
+		'''
+		Construct a :class:`Layer`.
+		
+		:param argument: A grid of strings. Cannot be a string itself.
+		'''
+		
 		if isinstance(argument, str):
 			raise TypeError('"rows" must not be a string')
 		
@@ -141,48 +160,102 @@ class Layer:
 	
 	@property
 	def height(self) -> int:
+		'''
+		The height of the layer.
+		'''
+		
 		return self._height
 	
 	@property
 	def width(self) -> int:
+		'''
+		The width of the layer.
+		'''
+		
 		return self._width
 	
 	@classmethod
 	def from_text(cls, text: str, width: int | None = None) -> Self:
-		lines = text.splitlines()
+		'''
+		Construct a :class:`Layer` from a piece of text.
+		
+		:param text: Any string, with one or more lines.
+		:param width: \
+			The width of the layer.
+		:return: A new :class:`Layer`.
+		'''
 		
 		if width is None:
-			width = max(len(line) for line in lines)
+			width = -1
+		
+		lines = text.splitlines()
+		longest_line_length = max(len(line) for line in lines)
+		
+		width = max([longest_line_length, width])
 		
 		return cls([line.ljust(width) for line in text.splitlines()])
 	
 	@classmethod
 	def from_sequence(cls, cells: Sequence[str], width: int) -> Self:
+		'''
+		Construct a :class:`Layer` from a sequence of strings.
+		
+		:param cells: A :class:`Sequence` of strings.
+		:param width: \
+			The number of cells per chunk. \
+			The last chunk is padded with spaces.
+		:return: A new :class:`Layer`.
+		'''
+		
 		rows = []
 		
 		for row in batched(cells, width):
-			padder = ' ' * (width - len(row))
-			rows.append(list(row) + list(padder))
+			if len(row) < width:
+				padder = ' ' * (width - len(row))
+				rows.append([*row, *padder])
+			else:
+				rows.append(list(row))
 		
 		return cls(rows)
 	
 	def rows(self) -> Generator[tuple[LayerCell, ...], None, None]:
+		r'''
+		Yield a tuple of :class:`LayerCell`\ s for each row.
+		'''
+		
 		yield from batched(self._cells, self._width)
 	
 	def columns(self) -> Generator[tuple[LayerCell, ...], None, None]:
+		r'''
+		Yield a tuple of :class:`LayerCell`\ s for each column.
+		'''
+		
 		for column in zip(*self.rows()):
 			yield column
 	
 	def cells(self) -> Generator[LayerCell, None, None]:
+		'''
+		Synonym of :meth:`__iter__`.
+		'''
+		
 		yield from self
 	
 	def copy(self) -> Self:
+		'''
+		Construct a new :class:`Layer` from this one.
+		'''
+		
 		string_cells = [cell.value for cell in self]
 		
 		return self.__class__.from_sequence(string_cells, self._width)
 
 
-class Canvas(Container[Layer]):
+class Canvas(Collection[Layer]):
+	
+	r'''
+	A collection of :class:`Layers`.
+	Its string representation is that of all its layers merged.
+	'''
 	
 	__slots__ = ('_height', '_width', '_layers')
 	
@@ -191,6 +264,13 @@ class Canvas(Container[Layer]):
 	_layers: list[Layer]
 	
 	def __init__(self, height: int, width: int) -> None:
+		'''
+		Construct a :class:`Canvas` of given height and width.
+		
+		:param height: The height of the canvas.
+		:param width: The width of the canvas.
+		'''
+		
 		self._height = height
 		self._width = width
 		self._layers = []
@@ -212,30 +292,69 @@ class Canvas(Container[Layer]):
 	def __contains__(self, layer: object) -> bool:
 		return layer in self._layers
 	
+	def __iter__(self) -> Iterator[Layer]:
+		return iter(self._layers)
+	
+	def __len__(self) -> int:
+		return len(self._layers)
+	
 	@property
 	def height(self) -> int:
+		'''
+		The height of the canvas.
+		'''
+		
 		return self._height
 	
 	@property
 	def width(self) -> int:
+		'''
+		The width of the canvas.
+		'''
+		
 		return self._width
 	
 	@property
 	def layers(self) -> Generator[Layer, None, None]:
+		'''
+		Yield every layer the canvas contains.
+		'''
+		
 		for layer in self._layers:
 			yield layer
 	
 	@classmethod
 	def from_layer(cls, layer: Layer) -> Self:
+		'''
+		Construct a :class:`Canvas` from a layer
+		using its height and width.
+		
+		:param layer: A :class:`Layer`.
+		:return: A new :class:`Canvas`.
+		'''
+		
 		canvas = cls(height = layer.height, width = layer.width)
 		canvas.add_layers(layer)
 		
 		return canvas
 	
 	def _fits_layer(self, layer: Layer) -> bool:
+		'''
+		Whether the layer has same height and width as the canvas.
+		
+		:param layer: A :class:`Layer`.
+		:return: ``True`` if the layer fits, ``False`` otherwise.
+		'''
+		
 		return self._height == layer.height and self._width == layer.width
 	
 	def add_layers(self, *layers: Layer) -> None:
+		r'''
+		Add one or more :class:`Layer`\ s to the canvas.
+		
+		:param layers: One or more :class:`Layer`\ s.
+		'''
+		
 		if not all(self._fits_layer(layer) for layer in layers):
 			raise ValueError(
 				'Layers must have same height and width as canvas'
@@ -248,6 +367,10 @@ _make_80_wide_layer = partial(Layer.from_text, width = 80)
 
 
 class Component(metaclass = LaxEnum):
+	r'''
+	Pre-built :class:`Layer`\ s to be used in the game.
+	'''
+	
 	GALLOWS = _make_80_wide_layer(get_asset('gallows.txt'))
 	HEAD = _make_80_wide_layer(get_asset('head.txt'))
 	TRUNK = _make_80_wide_layer(get_asset('trunk.txt'))

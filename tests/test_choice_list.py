@@ -22,11 +22,11 @@ def test_choices_list_getitem(choice_list, items, expected_values):
 
 
 @pytest.mark.parametrize('choice_list', Choices)
-def test_choice_list_str(choice_list):
+def test_choice_list_str(choice_list: ChoiceList):
 	stringified = str(choice_list)
 	lines = stringified.splitlines()
 	
-	assert all(len(line) <= ChoiceList._MAX_WIDTH for line in lines)
+	assert all(len(line) <= choice_list.max_width for line in lines)
 
 
 @pytest.mark.parametrize('choice_list', Choices)

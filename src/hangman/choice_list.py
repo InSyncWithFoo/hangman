@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import ClassVar, Mapping, NamedTuple, Self
+from typing import Mapping, NamedTuple, Self
 
 from ._lax_enum import LaxEnum
 from .word_list import Level
@@ -10,6 +10,10 @@ from .word_list import Level
 
 @dataclass(frozen = True, slots = True)
 class Choice:
+	'''
+	Represents a valid choice of a :class:`ChoiceList`.
+	'''
+	
 	shortcut: str
 	description: str
 	aliases: frozenset[str]
@@ -23,12 +27,21 @@ _ChoiceDescriptor = tuple[str, set[str], str | None]
 
 
 class ChoiceDescriptor(NamedTuple):
+	'''
+	Syntactic sugar for a bare tuple containing three elements:
+	``description``, ``aliases``, and ``value``.
+	'''
+	
 	description: str
 	aliases: set[str] = set()
 	value: str | None = None
 
 
 class _LengthList(list[int]):
+	'''
+	A list of integers which keeps track of the sum.
+	Meant for internal use only.
+	'''
 	
 	total: int
 	
@@ -39,29 +52,72 @@ class _LengthList(list[int]):
 		return instance
 	
 	def append(self, value: int) -> None:
+		'''
+		Append an integer value to the end of
+		the list and add it the total.
+		
+		:param value: A length.
+		'''
 		self.total += value
 		super().append(value)
 
 
 class ChoiceList:
 	
-	_MAX_WIDTH: ClassVar[int] = 80
-	_SEPARATOR: ClassVar[str] = ' ' * 2
-	
-	__slots__ = ('_shortcut_map', '_alias_map')
+	__slots__ = ('_shortcut_map', '_alias_map', 'max_width', 'separator')
 	
 	_shortcut_map: dict[str, Choice]
 	_alias_map: dict[str, Choice]
 	
+	separator: str
+	max_width: int
+	
 	def __new__(
 		cls, /,
-		argument: Mapping[str, _ChoiceDescriptor] | None = None,
+		argument: Mapping[str, _ChoiceDescriptor] | None = None, *,
+		separator: str = '  ',
+		max_width: int = 80,
 		**kwargs: _ChoiceDescriptor
 	) -> 'Self':  # PY-62301
+		r'''
+		Construct a list of valid choices whose string
+		representation looks like the following::
+		
+			[A] Foobar bazqux  [BAR] Lorem ipsum
+			[C] Consectetur adipiscing elit
+		
+		All shorcuts and aliases are case-insensitive and
+		mapped to their corresponding :class:`Choice`.
+		Shortcuts are uppercased in the string representation.
+		
+		A :class:`Choice` can be chosen by referencing
+		either ``shortcut`` or any of the ``aliases``.
+		
+		``argument`` and ``kwargs`` are shortcut-to-:class:`ChoiceDescriptor`
+		maps. Each ``shortcut`` *should* be a single character,
+		whereas the ``description``\ s need to be human-readable.
+		``value`` is the value the choice represents,
+		defaults to ``None``.
+		
+		:param argument: A :class:``collections.abc.Mapping``.
+		:param separator: \
+			A string to be used as the separator
+			in the string representation.
+		:param max_width: \
+			The maximum width of the string
+			representation, in characters.
+		:param kwargs: \
+			Other shortcut-to-descriptor arguments.
+		'''
+		
 		if isinstance(argument, Mapping):
 			kwargs = {**argument, **kwargs}
 		
 		instance = super().__new__(cls)
+		
+		instance.separator = separator
+		instance.max_width = max_width
+		
 		shortcut_map = instance._shortcut_map = {}
 		alias_map = instance._alias_map = {}
 		
@@ -106,17 +162,17 @@ class ChoiceList:
 			choice_length = len(choice_stringified)
 			
 			total_choice_length = lengths[-1].total + choice_length
-			total_separator_length = len(self._SEPARATOR) * len(lengths[-1])
+			total_separator_length = len(self.separator) * len(lengths[-1])
 			new_last_row_length = total_choice_length + total_separator_length
 			
-			if new_last_row_length > self._MAX_WIDTH:
+			if new_last_row_length > self.max_width:
 				output.append([])
 				lengths.append(_LengthList())
 			
 			output[-1].append(choice_stringified)
 			lengths[-1].append(choice_length)
 		
-		return '\n'.join(self._SEPARATOR.join(row) for row in output)
+		return '\n'.join(self.separator.join(row) for row in output)
 	
 	def __repr__(self) -> str:
 		return (
@@ -130,6 +186,10 @@ class ChoiceList:
 
 
 class Choices(metaclass = LaxEnum):
+	'''
+	Pre-built instances of :class:`ChoicesList`.
+	'''
+	
 	CONFIRMATION = ChoiceList(
 		Y = ChoiceDescriptor(
 			description = 'Yes',

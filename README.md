@@ -1,5 +1,7 @@
 # Hangman
 
+![Tests][B1]
+
 This Python package exposes a simple CLI hangman game.
 There are four levels in total: Easy (22.5k words),
 Medium (74.5k words), Hard (168k words), and Unix
@@ -16,6 +18,11 @@ threshold of originality and therefore not copyrightable.
 
 
 ## Installation
+
+This package only supports Python 3.12 and later. [PEP 695][6]
+features are not yet used due to *mypy* and PyCharm's limited
+support. Any other compatibility with earlier versions are
+purely incidental.
 
 To play the game, install it with _pip_ using either of the following:
 
@@ -35,8 +42,11 @@ $ hangman
 ```
 
 
+  [B1]: https://github.com/InSyncWithFoo/hangman/actions/workflows/tests.yaml/badge.svg
+
   [1]: ./src/hangman/words
   [2]: https://github.com/dolph/dictionary
   [3]: https://en.wikipedia.org/wiki/Words_(Unix)
   [4]: https://en.wikipedia.org/wiki/Moby_Project
   [5]: https://unix.stackexchange.com/a/253498
+  [6]: https://peps.python.org/pep-0695

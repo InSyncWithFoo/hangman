@@ -1,5 +1,9 @@
 class Word:
 	
+	'''
+	A word being guessed.
+	'''
+	
 	__slots__ = ('value', '_character_indices', '_masked')
 	
 	value: str
@@ -22,13 +26,31 @@ class Word:
 	
 	@property
 	def current_state(self) -> str:
+		'''
+		The letters, space-separated; unguessed
+		ones are replaced with underscores.
+		'''
+		
 		return ' '.join(self._masked)
 	
 	@property
 	def all_clear(self) -> bool:
+		'''
+		Whether all letters have been guessed correctly.
+		'''
+		
 		return all(char != '_' for char in self._masked)
 	
 	def count(self, guess: str) -> int:
+		'''
+		Count the guess's appearances in the word
+		and replace those with underscores in the
+		current state.
+		
+		:param guess: A letter.
+		:return: The number of its appearances.
+		'''
+		
 		if guess not in self:
 			return 0
 		

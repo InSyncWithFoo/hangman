@@ -7,7 +7,7 @@ from typing import ClassVar
 class LaxEnum(type):
 	'''
 	Despite its name, a LaxEnum is no different from
-	a normal class except from that it yields every
+	a normal class except for that it yields every
 	item that is not a dunder when being iterated over.
 	'''
 	
