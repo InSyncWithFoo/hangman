@@ -219,6 +219,7 @@ class Game:
 		
 		self._ended = True
 		self.output('Game over.'.center(self._MAX_DISPLAY_WIDTH, '-'))
+		self.output_current_points()
 	
 	def input(
 		self,
