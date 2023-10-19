@@ -51,7 +51,7 @@ class Layer:
 	_height: int
 	_width: int
 	
-	def __new__(cls, argument: _GridOfStrings) -> 'Self':  # PY-62301
+	def __new__(cls, argument: _GridOfStrings, /) -> 'Self':  # PY-62301
 		'''
 		Construct a :class:`Layer`.
 		
@@ -59,7 +59,7 @@ class Layer:
 		'''
 		
 		if isinstance(argument, str):
-			raise TypeError('"rows" must not be a string')
+			raise TypeError('"argument" must not be a string')
 		
 		instance = super().__new__(cls)
 		grid = [list(row) for row in argument]
