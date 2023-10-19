@@ -49,8 +49,6 @@ ResponseValidator = Callable[[str, ChoiceList | None], bool]
 
 OneOrManyValidators = Validator | list[Validator]
 
-_FailingValidators = Generator[Validator, None, None]
-
 
 class Conversation:
 	
@@ -100,11 +98,11 @@ class Conversation:
 		Repeat this process until the response passes all validations.
 		'''
 		
-		failing_validators: Callable[[], _FailingValidators] = lambda: (
+		failing_validators = lambda: (
 			validator for validator in validators
 			if not validator(response, choices)
 		)
-		find_first_failing_validator: Callable[[], Validator | None] = \
+		find_first_failing_validator = \
 			lambda: next(failing_validators(), None)
 		
 		response = self._get_response(prompt)
@@ -149,8 +147,12 @@ class Conversation:
 			validators = [
 				Validator(_response_is_valid_choice, self._INVALID_CHOICE)
 			]
+		elif isinstance(until, Validator):
+			validators = [until]
+		elif callable(until):
+			validators = [Validator(until, self._INVALID_CHOICE)]
 		else:
-			validators = [until] if callable(until) else until
+			validators = until
 		
 		return self._ask(
 			prompt, choices,
