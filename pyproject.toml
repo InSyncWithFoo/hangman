@@ -1,6 +1,6 @@
 [project]
 name = "hangman"
-version = "0.2.1"
+version = "0.3.0"
 description = "A CLI hangman game"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -35,3 +35,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-data = { "*" = ["*.txt"] }
+
+[tool.pytest.ini_options]
+addopts = "--cov=hangman --cov-report=html"
+testpaths = [
+	"tests"
+]

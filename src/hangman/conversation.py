@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 from .choice_list import ChoiceList
 
@@ -20,14 +20,6 @@ def _response_is_valid_choice(
 	return response in choices
 
 
-def _no_op(_response: str, _choices: ChoiceList | None) -> Literal[True]:
-	'''
-	A validator that always returns ``True``.
-	'''
-	
-	return True
-
-
 @dataclass(frozen = True, slots = True, eq = False)
 class Validator:
 	'''
@@ -43,11 +35,39 @@ class Validator:
 		return self.predicate(response, choices)
 
 
+class _ValidatorList(list[Validator]):
+	'''
+	Provides one helper method: :meth:`find_first_failing_validator`.
+	'''
+	
+	def find_first_failing_validator(
+		self,
+		response: str,
+		choices: ChoiceList | None
+	) -> Validator | None:
+		'''
+		Sequentially run all validators against the response
+		and return the first one that fails.
+		
+		:param response: The response to be validated.
+		:param choices: The valid choices.
+		:return: \
+			The first failing validator or ``None``
+			if all passes.
+		'''
+		
+		for validator in self:
+			if not validator(response, choices):
+				return validator
+		
+		return None
+
+
 InputGetter = Callable[[str], str]
 OutputDisplayer = Callable[[str], None]
 ResponseValidator = Callable[[str, ChoiceList | None], bool]
 
-OneOrManyValidators = Validator | list[Validator]
+OneOrManyValidators = ResponseValidator | Iterable[ResponseValidator]
 
 
 class Conversation:
@@ -66,16 +86,16 @@ class Conversation:
 	_input: InputGetter
 	_output: OutputDisplayer
 	
-	def __init__(self, ask: InputGetter, answer: OutputDisplayer) -> None:
+	def __init__(self, ask: InputGetter, reply: OutputDisplayer) -> None:
 		'''
 		Construct a :class:`Conversation`.
 		
 		:param ask: A ``input``-like callable to be called for inputs.
-		:param answer: A ``print``-like callable to be called to output.
+		:param reply: A ``print``-like callable to be called to output.
 		'''
 		
 		self._input = ask
-		self._output = answer
+		self._output = reply
 	
 	def _get_response(self, prompt: str) -> str:
 		'''
@@ -90,28 +110,40 @@ class Conversation:
 	def _ask(
 		self,
 		prompt: str, /,
-		choices: ChoiceList | None = None, *,
-		validators: list[Validator]
+		choices: ChoiceList | None,
+		validators: _ValidatorList
 	) -> str:
 		'''
 		Get a response, then validate it against the validators.
 		Repeat this process until the response passes all validations.
 		'''
 		
-		failing_validators = lambda: (
-			validator for validator in validators
-			if not validator(response, choices)
-		)
-		find_first_failing_validator = \
-			lambda: next(failing_validators(), None)
+		def find_first_failing_validator(_response: str) -> Validator | None:
+			return validators.find_first_failing_validator(_response, choices)
 		
 		response = self._get_response(prompt)
 		
-		while failing_validator := find_first_failing_validator():
-			self.answer(failing_validator.warning)
+		while failing_validator := find_first_failing_validator(response):
+			self.reply(failing_validator.warning)
 			response = self._get_response(prompt)
 		
 		return response
+	
+	def _make_validator(self, predicate: ResponseValidator, /) -> Validator:
+		'''
+		Construct a :class:`Validator` from a :class:`Callable`
+		with :attr:`_INVALID_RESPONSE` as the message.
+		
+		:param predicate: A :class:`ResponseValidator`
+		:return: \
+			``predicate`` if it is already a :class:`Validator`,
+			or a new :class:`Validator` otherwise.
+		'''
+		
+		if isinstance(predicate, Validator):
+			return predicate
+		
+		return Validator(predicate, self._INVALID_RESPONSE)
 	
 	def ask(
 		self,
@@ -141,29 +173,26 @@ class Conversation:
 		prompt = f'{question}\n'
 		prompt += f'{choices}\n' if choices is not None else ''
 		
-		if choices is None and until is None:
-			validators = [Validator(_no_op, '')]
-		elif until is None:
-			validators = [
-				Validator(_response_is_valid_choice, self._INVALID_CHOICE)
-			]
-		elif isinstance(until, Validator):
-			validators = [until]
-		elif callable(until):
-			validators = [Validator(until, self._INVALID_CHOICE)]
-		else:
-			validators = until
+		validators = _ValidatorList()
 		
-		return self._ask(
-			prompt, choices,
-			validators = validators
-		)
+		if choices is not None and until is None:
+			validators.append(self._make_validator(_response_is_valid_choice))
+		
+		elif isinstance(until, Iterable):
+			validators.extend(
+				self._make_validator(predicate)
+				for predicate in until
+			)
+		elif until is not None:
+			validators.append(self._make_validator(until))
+		
+		return self._ask(prompt, choices, validators)
 	
-	def answer(self, answer: str) -> None:
+	def reply(self, reply: str) -> None:
 		'''
 		Outputs the caller's message.
 		
-		:param answer: The message to output.
+		:param reply: The message to output.
 		'''
 		
-		self._output(answer)
+		self._output(reply)

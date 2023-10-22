@@ -1,3 +1,4 @@
+import copy
 import math
 import operator
 import random
@@ -102,6 +103,16 @@ def test_layer_construction(layer, height, width):
 	assert layer.width == width
 
 
+def test_layer_construction_from_string():
+	with pytest.raises(TypeError):
+		_ = Layer('foobar')
+
+
+def test_layer_construction_different_width():
+	with pytest.raises(ValueError):
+		_ = Layer(['foo', 'lorem'])
+
+
 @pytest.mark.parametrize('text, height, width', [
 	('\n'.join(LayerContent.LOSS), 2, 5)
 ])
@@ -204,9 +215,10 @@ def test_layer_eq(layer, other, expected):
 	'loss'
 ], indirect = True)
 def test_layer_copy(layer):
-	copy = layer.copy()
+	copies = [layer, layer.copy(), copy.copy(layer), copy.deepcopy(layer)]
 	
-	assert all(id(cell) for cell in copy)
+	for cells in zip(*copies):
+		assert len(set(id(cell) for cell in cells)) == len(copies)
 
 
 @pytest.mark.parametrize('layers, expected', [
@@ -229,6 +241,16 @@ def test_layer_iadd(layers, expected):
 	
 	assert merged is first_copied
 	assert merged == expected
+
+
+@pytest.mark.parametrize('layer, other', [
+	('loss', Layer(['lorem', 'ipsum', 'dolor'])),
+	('loss', Layer(['consectetur', ' adipiscing'])),
+	('loss', Layer(LayerContent.HANGMAN))
+], indirect = ['layer'])
+def test_layer_add_different_height_or_width(layer, other):
+	with pytest.raises(ValueError):
+		_ = layer + other
 
 
 @pytest.mark.parametrize('layer, expected', [
@@ -336,6 +358,7 @@ def test_canvas_str(layers, expected):
 	canvas.add_layers(*others)
 	
 	assert str(canvas) == str(expected)
+
 
 # @pytest.mark.xfail()
 def test_component():

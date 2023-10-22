@@ -5,7 +5,7 @@ from collections.abc import Collection, Generator, Iterator, Sequence
 from dataclasses import dataclass
 from functools import partial
 from itertools import batched
-from typing import overload, Self
+from typing import Never, overload, Self
 
 from ._lax_enum import LaxEnum
 from ._static_reader import get_asset
@@ -98,11 +98,11 @@ class Layer:
 	
 	@overload
 	def __getitem__(self, item: int) -> LayerCell:
-		...
+		pass
 	
 	@overload
 	def __getitem__(self, item: tuple[int, int]) -> LayerCell:
-		...
+		pass
 	
 	def __getitem__(self, item: int | tuple[int, int]) -> LayerCell:
 		if isinstance(item, int):
@@ -157,6 +157,12 @@ class Layer:
 				self._cells[index] = copy_cell(other_cell)
 		
 		return self
+	
+	def __copy__(self) -> Self:
+		return self.copy()
+	
+	def __deepcopy__(self, _memodict: dict[Never, Never]) -> Self:
+		return self.copy()
 	
 	@property
 	def height(self) -> int:

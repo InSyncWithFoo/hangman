@@ -81,10 +81,7 @@ class Game:
 		
 		self._ended = False
 		
-		self._conversation = Conversation(
-			ask = input_getter,
-			answer = output_displayer
-		)
+		self._conversation = Conversation(ask = input_getter, reply = output_displayer)
 	
 	@property
 	def points(self) -> int:
@@ -160,6 +157,12 @@ class Game:
 		
 		Finally, initialize a :class:`GameRound` by passing
 		the word and the coefficent to it.
+		
+		Technically, this function would go into an infinite
+		loop when the user has played enough rounds, but let's
+		hope that no one's that crazy.
+		
+		A bot? Sounds cool. Tell me if you write one.
 		'''
 		
 		level = self._prompt_for_level()
@@ -233,12 +236,12 @@ class Game:
 		
 		return self._conversation.ask(prompt, choices, until = validators)
 	
-	def output(self, answer: str) -> None:
+	def output(self, reply: str) -> None:
 		'''
-		Shorthand for ``self.conversation.answer``.
+		Shorthand for ``self.conversation.reply``.
 		'''
 		
-		return self._conversation.answer(answer)
+		return self._conversation.reply(reply)
 	
 	def output_current_points(self) -> None:
 		'''
