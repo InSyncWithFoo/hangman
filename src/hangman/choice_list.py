@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import Mapping, NamedTuple, Self
+from typing import Final, Mapping, NamedTuple, Self
 
 from ._lax_enum import LaxEnum
 from .word_list import Level
@@ -190,7 +190,7 @@ class Choices(metaclass = LaxEnum):
 	Pre-built instances of :class:`ChoicesList`.
 	'''
 	
-	CONFIRMATION = ChoiceList(
+	CONFIRMATION: Final[ChoiceList] = ChoiceList(
 		Y = ChoiceDescriptor(
 			description = 'Yes',
 			aliases = {'Yes'},
@@ -202,7 +202,7 @@ class Choices(metaclass = LaxEnum):
 			value = 'NO'
 		)
 	)
-	LEVEL = ChoiceList(
+	LEVEL: Final[ChoiceList] = ChoiceList(
 		E = ChoiceDescriptor(
 			description = 'Easy (22.5k words)',
 			aliases = {'EASY'},

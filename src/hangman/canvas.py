@@ -5,7 +5,7 @@ from collections.abc import Collection, Generator, Iterator, Sequence
 from dataclasses import dataclass
 from functools import partial
 from itertools import batched
-from typing import Never, overload, Self
+from typing import Final, Never, overload, Self
 
 from ._lax_enum import LaxEnum
 from ._static_reader import get_asset
@@ -377,11 +377,11 @@ class Component(metaclass = LaxEnum):
 	Pre-built :class:`Layer`\ s to be used in the game.
 	'''
 	
-	GALLOWS = _make_80_wide_layer(get_asset('gallows.txt'))
-	HEAD = _make_80_wide_layer(get_asset('head.txt'))
-	TRUNK = _make_80_wide_layer(get_asset('trunk.txt'))
-	LEFT_ARM = _make_80_wide_layer(get_asset('left_arm.txt'))
-	RIGHT_ARM = _make_80_wide_layer(get_asset('right_arm.txt'))
-	LEFT_LEG = _make_80_wide_layer(get_asset('left_leg.txt'))
-	RIGHT_LEG = _make_80_wide_layer(get_asset('right_leg.txt'))
-	YOU_LOST = _make_80_wide_layer(get_asset('you_lost.txt'))
+	GALLOWS: Final[Layer] = _make_80_wide_layer(get_asset('gallows.txt'))
+	HEAD: Final[Layer] = _make_80_wide_layer(get_asset('head.txt'))
+	TRUNK: Final[Layer] = _make_80_wide_layer(get_asset('trunk.txt'))
+	LEFT_ARM: Final[Layer] = _make_80_wide_layer(get_asset('left_arm.txt'))
+	RIGHT_ARM: Final[Layer] = _make_80_wide_layer(get_asset('right_arm.txt'))
+	LEFT_LEG: Final[Layer] = _make_80_wide_layer(get_asset('left_leg.txt'))
+	RIGHT_LEG: Final[Layer] = _make_80_wide_layer(get_asset('right_leg.txt'))
+	YOU_LOST: Final[Layer] = _make_80_wide_layer(get_asset('you_lost.txt'))
